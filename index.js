@@ -212,7 +212,7 @@ webhookHandler.on('issues', function (repo, data) {
 		var body = issue.body;
 		var projectArray = getArrayValues(body, '**Projects**:', ',', '[', ']');
 		if (data.action === 'edited') {
-			var prevProjectArray = getArrayValues(issue.changes.body.from, '**Projects**:', ',', '[', ']');
+			var prevProjectArray = getArrayValues(data.changes.body.from, '**Projects**:', ',', '[', ']');
 			projectArray = _.difference(projectArray, prevProjectArray);
 		}
 		addIssueToProject(repository, issue, projectArray);
