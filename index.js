@@ -106,7 +106,9 @@ function addIssueToProject(repo, issue, projectNames) {
 		owner: repo.owner.login,
 		repo: repo.name,
 	}, function(err, allProjects) {
-		console.log(allProjects);
+		if (err) {
+			throw new Error(err);
+		}
 		allProjects.forEach(function(project) {
 			if (projectNames.indexOf(project.name) >= 0) {
 				existingProjects.push(project);
@@ -124,6 +126,9 @@ function addIssueToProject(repo, issue, projectNames) {
 			github.projects.getProjectColumns({
 				project_id: project.id,
 			}, function(err, columns) {
+				if (err) {
+					throw new Error(err);
+				}
 				var columnExists = false;
 				columns.forEach(function(column) {
 					if (column.name === projectColumnName) {
@@ -142,6 +147,9 @@ function addIssueToProject(repo, issue, projectNames) {
 						project_id: project.id,
 						name: projectColumnName,
 					}, function(err, newColumn) {
+						if (err) {
+							throw new Error(err);
+						}
 						github.projects.createProjectCard({
 							column_id: newColumn.id,
 							content_id: issue.id,
@@ -157,13 +165,18 @@ function addIssueToProject(repo, issue, projectNames) {
 				owner: repo.owner.login,
 				repo: repo.name,
 				name: projectName,
-				body: '',
+				body: 'New Project',
 			}, function(err, newProject) {
-				console.log(err);
+				if (err) {
+					throw new Error(err);
+				}
 				github.projects.createProjectColumn({
 					project_id: newProject.id,
 					name: projectColumnName,
 				}, function(err, newColumn) {
+					if (err) {
+						throw new Error(err);
+					}
 					github.projects.createProjectCard({
 						column_id: newColumn.id,
 						content_id: issue.id,
@@ -211,7 +224,9 @@ webhookHandler.on('issues', function (repo, data) {
 });
 
 webhookHandler.on('error', function (err, req, res) {
-	console.error('an error occurred', err);
+	if (err) {
+		throw new Error(err);
+	}
 })
 
 app.listen(app.get('port'), function () {
