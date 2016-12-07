@@ -40,31 +40,20 @@ app.set('port', process.env.PORT || 5555);
 app.use(bodyParser.json());
 app.use(webhookHandler);
 
-// github.repos.getAll({}, function(err, res) {
-// 	const repos = res.map(function(repo) {
-// 		return repo.name;
-// 	});
-// 	console.log(repos);
-// });
-
 webhookHandler.on('pull_request', function (repo, data) {
 });
 webhookHandler.on('issues', function (repo, data) {
-	// if (repos.indexOf(repo) < 0 || data.action !== 'opened' || labels.issue.length === 0) {
-	// 	return;
-	// }
 	var issue = data.issue;
 	var repository = data.repository;
 	var body = issue.body;
 	var labelStringStart = body.indexOf('**Labels**:');
 	var labelArrayStart = body.indexOf('[', labelStringStart);
 	var labelArrayEnd = body.indexOf(']', labelArrayStart);
-	var labelArrayString = body.substring(labelArrayStart, labelArrayEnd);
 	var labelArray = [];
-	try {
-		labelArray = JSON.parse(labelArrayString);
-	} catch(e) {
-		console.log(e);
+
+	if ((labelArrayStart + 1) < labelArrayEnd) {
+		var labelArrayString = body.substring(labelArrayStart + 1, labelArrayEnd - 1);
+		labelArray = labelArrayString.split(',').map(function(label) { return label.trim(); });
 	}
 
 	github.issues.addLabels({
