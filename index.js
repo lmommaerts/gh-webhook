@@ -59,11 +59,36 @@ webhookHandler.on('issues', function (repo, data) {
 		labelArray = labelArrayString.split(',').map(function(label) { return label.trim(); });
 	}
 
+	var existingLabels = issue.labels.map(function(existingLabel) {
+		return existingLabel.name;
+	});
+	var newLabels = [];
+	var removeLabels = [];
+	existingLabels.forEach(function (existingLabel) {
+		if (labelArray.indexOf(existingLabel) < 0) {
+			removeLabels.push(existingLabel);
+		}
+	});
+
+	labelArray.forEach(function(label) {
+		if (existingLabels.indexOf(label) < 0) {
+			newLabels.push(label);
+		}
+	});
+
 	github.issues.addLabels({
 		owner: repository.owner.login,
 		repo: repo,
 		number: issue.number,
-		body: labelArray,
+		body: newLabels,
+	});
+	removeLabels.forEach(function(label) {
+		github.issues.removeLabel({
+			owner: repository.owner.login,
+			repo: repo,
+			number: issue.number,
+			name: label,
+		});
 	});
 });
 
