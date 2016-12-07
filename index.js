@@ -152,7 +152,7 @@ function addIssueToProject(repo, issue, projectNames) {
 		});
 
 		newProjects.forEach(function(projectName) {
-			github.project.createRepoProject({
+			github.projects.createRepoProject({
 				owner: repo.owner.login,
 				repo: repo.name,
 				name: projectName,
