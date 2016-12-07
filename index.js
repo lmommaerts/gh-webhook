@@ -52,6 +52,8 @@ function getArrayValues(str, label, delimiter, start, end) {
 		var arrayString = str.substring(arrayStart + 1, arrayEnd);
 		array = arrayString.split(delimiter).map(function(item) { return item.trim(); }).filter(function(item) { return !!item; });
 	}
+
+	return array;
 }
 
 function labelIssue(repo, issue) {
