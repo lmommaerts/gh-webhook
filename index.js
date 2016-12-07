@@ -43,6 +43,9 @@ app.use(webhookHandler);
 webhookHandler.on('pull_request', function (repo, data) {
 });
 webhookHandler.on('issues', function (repo, data) {
+	if (data.action === 'labeled') {
+		return;
+	}
 	var issue = data.issue;
 	var repository = data.repository;
 	var body = issue.body;
@@ -51,8 +54,8 @@ webhookHandler.on('issues', function (repo, data) {
 	var labelArrayEnd = body.indexOf(']', labelArrayStart);
 	var labelArray = [];
 
-	if ((labelArrayStart + 1) < labelArrayEnd) {
-		var labelArrayString = body.substring(labelArrayStart + 1, labelArrayEnd - 1);
+	if (labelArrayStart < labelArrayEnd) {
+		var labelArrayString = body.substring(labelArrayStart + 1, labelArrayEnd);
 		labelArray = labelArrayString.split(',').map(function(label) { return label.trim(); });
 	}
 
