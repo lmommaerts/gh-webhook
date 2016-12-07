@@ -190,6 +190,16 @@ webhookHandler.on('pull_request', function (repo, data) {
 	var repository = data.repository;
 	var pr = data.pull_request;
 
+	if (['opened', 'edited'].indexOf(data.action) >= 0) {
+		var body = issue.body;
+		var projectArray = getArrayValues(body, '**Projects**:', ',', '[', ']');
+		if (data.action === 'edited') {
+			var prevProjectArray = getArrayValues(data.changes.body.from, '**Projects**:', ',', '[', ']');
+			projectArray = _.difference(projectArray, prevProjectArray);
+		}
+		addIssueToProject(repository, pr, projectArray);
+	}
+
 	if (data.action !== 'labeled') {
 		labelIssue(repository, pr);
 	}
