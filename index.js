@@ -42,14 +42,7 @@ app.use(webhookHandler);
 
 var repos = (process.env.GITHUB_REPOS || '').split(',');
 
-webhookHandler.on('pull_request', function (repo, data) {
-});
-webhookHandler.on('issues', function (repo, data) {
-	if (repos.indexOf(repo) < 0 || data.action === 'labeled') {
-		return;
-	}
-	var issue = data.issue;
-	var repository = data.repository;
+function labelIssue(repo, issue) {
 	var body = issue.body;
 	var labelStringStart = body.indexOf('**Labels**:');
 	var labelArrayStart = body.indexOf('[', labelStringStart);
@@ -79,19 +72,116 @@ webhookHandler.on('issues', function (repo, data) {
 	});
 
 	github.issues.addLabels({
-		owner: repository.owner.login,
-		repo: repo,
+		owner: repo.owner.login,
+		repo: repo.name,
 		number: issue.number,
 		body: newLabels,
 	});
 	removeLabels.forEach(function(label) {
 		github.issues.removeLabel({
-			owner: repository.owner.login,
-			repo: repo,
+			owner: repo.owner.login,
+			repo: repo.name,
 			number: issue.number,
 			name: label,
 		});
 	});
+}
+
+function addIssueToProject(repo, data) {
+	var issue = data.issue;
+	var repository = data.repository;
+	var body = issue.body;
+	var projectStringStart = body.indexOf('**Projects**:');
+	var projectArrayStart = body.indexOf('[', projectStringStart);
+	var projectArrayEnd = body.indexOf(']', projectArrayStart);
+	var projectArray = [];
+	var projectColumnName = 'Backlog';
+
+	if (projectArrayStart < projectArrayEnd) {
+		var projectArrayString = body.substring(projectArrayStart + 1, projectArrayEnd);
+		projectArray = projectArrayString.split(',').map(function(label) { return label.trim(); }).filter(function(label) { return !!label; });
+	}
+
+	var existingProjects = github.projects.getRepoProjects({
+		owner: repository.owner.login,
+		repo,
+	}, function(err, existingProjects) {
+		existingProjects.forEach(function(existingProject) {
+			if (projectArray.indexOf(existingProject.name) < 0) {
+				github.projects.getProjectColumns({
+					project_id: existingProject.id,
+				}, function(err, columns) {
+					var columnExists = false;
+					columns.forEach(function(column) {
+						if (column.name === projectColumnName) {
+							columnExists = true;
+							github.projects.createProjectCard({
+								column_id: column.id,
+								content_id: issue.id,
+								content_type: 'Issue',
+							});
+						}
+					});
+
+					if (!columnExists) {
+						// create column
+						github.projects.createProjectColumn({
+							project_id: existingProject.id,
+							name: projectColumnName,
+						}, function(err, newColumn) {
+							github.projects.createProjectCard({
+								column_id: newColumn.id,
+								content_id: issue.id,
+								content_type: 'Issue',
+							});
+						});
+					}
+				});
+			}
+		});
+		var newLabels = [];
+		var removeLabels = [];
+		existingLabels.forEach(function (existingLabel) {
+			if (labelArray.indexOf(existingLabel) < 0) {
+				removeLabels.push(existingLabel);
+			}
+		});
+
+		labelArray.forEach(function(label) {
+			if (existingLabels.indexOf(label) < 0) {
+				newLabels.push(label);
+			}
+		});
+	});
+}
+
+webhookHandler.on('pull_request', function (repo, data) {
+	if (repos.indexOf(repo) < 0 || data.action === 'labeled') {
+		return;
+	}
+
+	var repository = data.repository;
+	var pr = data.pull_request;
+
+	if (data.action !== 'labeled') {
+		labelIssue(repository, pr);
+	}
+});
+webhookHandler.on('issues', function (repo, data) {
+	if (repos.indexOf(repo) < 0) {
+		return;
+	}
+
+	var repository = data.repository;
+	var issue = data.issue;
+
+	if (data.action === 'created') {
+		addIssueToProject(repository, issue);
+	}
+
+	if (data.action !== 'labeled') {
+		labelIssue(repository, issue);
+	}
 });
 
 webhookHandler.on('error', function (err, req, res) {
