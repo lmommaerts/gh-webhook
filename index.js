@@ -106,6 +106,7 @@ function addIssueToProject(repo, issue, projectNames) {
 		owner: repo.owner.login,
 		repo: repo.name,
 	}, function(err, allProjects) {
+		console.log(allProjects);
 		allProjects.forEach(function(project) {
 			if (projectNames.indexOf(project.name) >= 0) {
 				existingProjects.push(project);
@@ -158,6 +159,7 @@ function addIssueToProject(repo, issue, projectNames) {
 				name: projectName,
 				body: '',
 			}, function(err, newProject) {
+				console.log(err);
 				github.projects.createProjectColumn({
 					project_id: newProject.id,
 					name: projectColumnName,
