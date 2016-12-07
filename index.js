@@ -1,10 +1,8 @@
 var express = require('express');
 var _ = require('lodash');
-var request = require('request');
 var GitHubApi = require('github');
 var GithubWebHook = require('express-github-webhook');
 var bodyParser = require('body-parser');
-var debug = require('debug-log')('github-auto-label');
 
 var accessToken = process.env.GITHUB_TOKEN;
 
@@ -30,12 +28,6 @@ github.authenticate({
     token: accessToken,
 });
 
-var repos = github.repos.getAll({}, function(err, res) {
-	res.forEach(function(repo) {
-	});
-});
-
-
 var webhookSettings = {
 	path: process.env.WEBHOOK_PATH || '/',
 	secret: process.env.GITHUB_SECRET,
@@ -48,62 +40,38 @@ app.set('port', process.env.PORT || 5555);
 app.use(bodyParser.json());
 app.use(webhookHandler);
 
+// github.repos.getAll({}, function(err, res) {
+// 	const repos = res.map(function(repo) {
+// 		return repo.name;
+// 	});
+// 	console.log(repos);
+// });
+
 webhookHandler.on('pull_request', function (repo, data) {
-	if (repos.indexOf(repo) < 0 || data.action !== 'opened' || labels.pr.length === 0) {
-		return;
-	}
-	debug(
-		'[%s] Incoming webhook. adding labels %s to %s#%s',
-		JSON.stringify(labels.pr), repo, data.pull_request.number
-	);
-	var opts = {
-		method:'POST',
-		uri: data.pull_request.issue_url + '/labels',
-		headers: {
-			'User-Agent': 'gh-webhook',
-			'Authorization': 'token '+accessToken,
-			'Content-Type': 'application/json'
-		},
-		form: JSON.stringify(labels.pr)
-	};
-	request(opts, function(err, results, body) {
-		if (err) {
-			console.error(err);
-		}
-		debug(
-			'[%s] API response %s',
-			JSON.stringify(body, null, ' ')
-		);
-	});
 });
 webhookHandler.on('issues', function (repo, data) {
-	if (repos.indexOf(repo) < 0 || data.action !== 'opened' || labels.issue.length === 0) {
-		return;
+	// if (repos.indexOf(repo) < 0 || data.action !== 'opened' || labels.issue.length === 0) {
+	// 	return;
+	// }
+	var issue = data.issue;
+	var repository = data.repository;
+	var body = issue.body;
+	var labelStringStart = body.indexOf('**Labels**:');
+	var labelArrayStart = body.indexOf('[', labelStringStart);
+	var labelArrayEnd = body.indexOf(']', labelArrayStart);
+	var labelArrayString = body.substring(labelArrayStart, labelArrayEnd);
+	var labelArray = [];
+	try {
+		labelArray = JSON.parse(labelArrayString);
+	} catch(e) {
+		console.log(e);
 	}
-	debug(
-		'[%s] Incoming webhook. adding labels %s to %s#%s',
-		JSON.stringify(labels.issue),
-		repo,
-		data.issue.number
-	);
-	var opts = {
-		method:'POST',
-		uri: data.issue.url + '/labels',
-		headers: {
-			'User-Agent': 'gh-webhook',
-			'Authorization': 'token '+accessToken,
-			'Content-Type': 'application/json'
-		},
-		form: JSON.stringify(labels.issue)
-	};
-	request(opts, function(err, results, body){
-		if (err) {
-			console.error(err);
-		}
-		debug(
-			'[%s] API response %s',
-			JSON.stringify(body, null, ' ')
-		);
+
+	github.issues.addLabels({
+		owner: repository.owner.login,
+		repo: repo,
+		number: issue.number,
+		body: labelArray,
 	});
 });
 
