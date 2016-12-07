@@ -40,8 +40,6 @@ app.set('port', process.env.PORT || 5555);
 app.use(bodyParser.json());
 app.use(webhookHandler);
 
-var repos = (process.env.GITHUB_REPOS || '').split(',');
-
 function getArrayValues(str, label, delimiter, start, end) {
 	var stringStart = str.indexOf(label);
 	var array = [];
@@ -189,10 +187,6 @@ function addIssueToProject(repo, issue, projectNames) {
 }
 
 webhookHandler.on('pull_request', function (repo, data) {
-	if (repos.indexOf(repo) < 0 || data.action === 'labeled') {
-		return;
-	}
-
 	var repository = data.repository;
 	var pr = data.pull_request;
 
@@ -201,10 +195,6 @@ webhookHandler.on('pull_request', function (repo, data) {
 	}
 });
 webhookHandler.on('issues', function (repo, data) {
-	if (repos.indexOf(repo) < 0) {
-		return;
-	}
-
 	var repository = data.repository;
 	var issue = data.issue;
 
