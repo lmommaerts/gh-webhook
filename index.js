@@ -40,10 +40,12 @@ app.set('port', process.env.PORT || 5555);
 app.use(bodyParser.json());
 app.use(webhookHandler);
 
+var repos = (process.env.GITHUB_REPOS || '').split(',');
+
 webhookHandler.on('pull_request', function (repo, data) {
 });
 webhookHandler.on('issues', function (repo, data) {
-	if (data.action === 'labeled') {
+	if (repos.indexOf(repo) < 0 || data.action === 'labeled') {
 		return;
 	}
 	var issue = data.issue;
