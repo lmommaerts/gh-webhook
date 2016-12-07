@@ -56,7 +56,7 @@ webhookHandler.on('issues', function (repo, data) {
 
 	if (labelArrayStart < labelArrayEnd) {
 		var labelArrayString = body.substring(labelArrayStart + 1, labelArrayEnd);
-		labelArray = labelArrayString.split(',').map(function(label) { return label.trim(); });
+		labelArray = labelArrayString.split(',').map(function(label) { return label.trim(); }).filter(function(label) { return !!label; });
 	}
 
 	var existingLabels = issue.labels.map(function(existingLabel) {
