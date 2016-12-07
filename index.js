@@ -45,11 +45,11 @@ var repos = (process.env.GITHUB_REPOS || '').split(',');
 function getArrayValues(str, label, delimiter, start, end) {
 	var stringStart = str.indexOf(label);
 	var arrayStart = str.indexOf(start, stringStart);
-	var arrayEnd = body.indexOf(end, arrayStart);
+	var arrayEnd = str.indexOf(end, arrayStart);
 	var array = [];
 
 	if (arrayStart < arrayEnd) {
-		var arrayString = str.substring(arrayStart + 1, aArrayEnd);
+		var arrayString = str.substring(arrayStart + 1, arrayEnd);
 		array = arrayString.split(delimiter).map(function(item) { return item.trim(); }).filter(function(item) { return !!item; });
 	}
 }
