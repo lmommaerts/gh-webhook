@@ -60,9 +60,9 @@ function labelIssue(repo, issue) {
 	var body = issue.body;
 	var labelArray = getArrayValues(body, '**Labels**:', ',', '[', ']');
 
-	var existingLabels = issue.labels.map(function(existingLabel) {
+	var existingLabels = issue.labels.length ? issue.labels.map(function(existingLabel) {
 		return existingLabel.name;
-	});
+	}) : [];
 	var newLabels = [];
 	var removeLabels = [];
 	existingLabels.forEach(function (existingLabel) {
